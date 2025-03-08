@@ -55,3 +55,4 @@ rsconnect/
 2_documentation/*
 3_output/*
 4_tables/*
+local_testing.R
