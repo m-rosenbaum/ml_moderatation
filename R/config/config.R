@@ -14,7 +14,7 @@ SIM_PARAMS <- list(
 
 # File paths
 PATHS <- list(
-    seed_file = "seeds.csv",
+    seed_file = "data/seeds.csv",
     output_dir = "G:/My Drive/CAPP/2025_Q2_ECON 41300_Exp/Paper/",
     results_dir = "3_output/"
 )

@@ -3,8 +3,6 @@
 #   Author: Michael Rosenbaum
 ################################################################################
 
-source("config.R") 
-
 gen_output_df <- function() {
     # Generates a tibble with appropriately typed and named columns to fill
     # with simulation results
@@ -25,7 +23,7 @@ gen_output_df <- function() {
     return(df)
 }
 
-# Add outcome to the DF with defaults as NA
+
 add_sim_to_df <- function(df,
                             seed = NA_integer_,
                             autoc_p = NA_real_,
@@ -52,6 +50,7 @@ add_sim_to_df <- function(df,
                     )
     return(df)
 }
+
 
 gen_data <- function(n_obs, n_cols, seed, constant=TRUE) {
     # Create simulated data to test estimated CATE procedure that can
@@ -138,6 +137,7 @@ gen_data <- function(n_obs, n_cols, seed, constant=TRUE) {
 
     return(df)
 }
+
 
 sim_iter_cate <- function(Y, X, W, output, seed) {
     # Run a single simulation to estimate CATEs using the Wager procedure.

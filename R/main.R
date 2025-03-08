@@ -3,7 +3,8 @@
 #   Author: Michael Rosenbaum
 #   Notes: adapted from https://github.com/grf-labs/grf/tree/master/experiments/ijmpr
 ################################################################################
-# Set up environment
+# 1. Set up environment
+# 2. Run simulation
 
 
 
@@ -18,7 +19,6 @@
 ## A. Clear local files
 rm(list = ls())
 
-
 ## B. Set up library
 library(grf)
 library(ggplot2)
@@ -26,9 +26,9 @@ library(tidyverse)
 library(purrr)
 
 ## C. Load files
-source("config.R")
-source("simulation_functions.R")
-source("data_generation.R")
+source("R/config/config.R")
+source("R/sim/simulation_functions.R")
+source("R/sim/data_generation.R")
 
 
 

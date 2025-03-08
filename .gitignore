@@ -53,6 +53,6 @@ rsconnect/
 # Paper info
 1_manuscript/*
 2_documentation/*
-3_output/*
+output/*
 4_tables/*
 local_testing.R
