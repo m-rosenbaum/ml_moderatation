@@ -118,7 +118,6 @@ gen_data <- function(n_obs, n_cols, seed, ate=0) {
 
     ## Taus
     # Calculate minimum detectable effect based on n_obs
-    # TODO: Binary outcome -- would just be 2.8 * sqrt(1/n_obs)
     mde <- calc_mde(outcome)
     if (ate == 0) {
         # Constant effect at MDE
@@ -138,16 +137,16 @@ gen_data <- function(n_obs, n_cols, seed, ate=0) {
         
         # Generate tau with desired mean and variance
         tau <- 0.50 * rnorm(n_obs, 0, 1) + 0.50 * moderators
-        tau <- tau * (req_sd / sd(tau)) # Scale the demeaned dist by the quantile needed to get 5% negative, than shift to the MDE
-        tau <- (tau - mean(tau)) + mde  
+        tau <- tau * (req_sd / sd(tau)) # Scale the demeaned dist by the quantile needed to get 5% negative
+        tau <- (tau - mean(tau)) + mde # Shift to mean = MDE
     }
 
     # Create data frame
     df <- tibble(outcome, rand, xs, tau) %>%
         arrange(rand) %>%
         mutate(treatment = if_else(row_number() > (n_obs / 2), 1, 0)) %>%
-        mutate(outcome = if_else(treatment == 1, outcome + tau, outcome)) %>%
         select(-c(rand)) %>%
+        mutate(outcome = if_else(treatment == 0, outcome, outcome + tau)) %>%
         select(outcome, treatment, tau, starts_with("X")) # Reorder outcomes
 
     return(df)

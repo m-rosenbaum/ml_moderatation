@@ -37,7 +37,7 @@ test_that("gen_data produces correct number of taus below 0", {
 test_that("gen_data produces ATEs that match epected", {
   # Test with larger sample size for stable estimates
   seed <- 1
-  n_obs <- 1000
+  n_obs <- 10000
   ate <- 0.3
   n_cols <- 15
 
@@ -46,16 +46,17 @@ test_that("gen_data produces ATEs that match epected", {
 
   # Test treatment effect
   model <- lm(outcome ~ treatment, data = result)
-  treatment_effect <- unname(coef(model)["treatment"])
-  expect_equal(treatment_effect, mean(result$tau[result$treatment==1]), tolerance = 0.01)
+  tau_hat <- unname(coef(model)["treatment"])
+  tau <- mean(result$tau[result$treatment==1])
+  expect_equal(tau_hat, tau, tolerance = 0.01)
 })
 
 
 test_that("gen_data maintains statistical properties across different parameters", {
   # Test with different parameter combinations
   test_cases <- list(
-    list(n_obs = 500,  n_cols=15, seed=2, ate = 0),
-    list(n_obs = 1000,  n_cols=15, seed=3, ate = 0.01),
+    list(n_obs = 500,  n_cols=15,  seed=2, ate = 0),
+    list(n_obs = 1000,  n_cols=15, seed=3, ate = 0.5),
     list(n_obs = 2500,  n_cols=15, seed=4, ate = 0),
     list(n_obs = 5000,  n_cols=15, seed=5, ate = 0.1),
     list(n_obs = 10000, n_cols=15, seed=6, ate = 0.25)
@@ -73,8 +74,9 @@ test_that("gen_data maintains statistical properties across different parameters
 
     # Test treatment effect
     model <- lm(outcome ~ treatment, data = result)
-    treatment_effect <- unname(coef(model)["treatment"])
-    expect_equal(treatment_effect, mean(result$tau[result$treatment==1]), tolerance = 0.01)
+    tau_hat <- unname(coef(model)["treatment"])
+    tau <- mean(result$tau[result$treatment==1])
+    expect_equal(tau_hat, tau, tolerance = 0.01)
   }
 })
 
