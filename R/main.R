@@ -44,7 +44,7 @@ main <- function() {
     results <- expand.grid(
         n_cols = SIM_PARAMS$n_cols,
         n_rows = SIM_PARAMS$n_rows,
-        constant = SIM_PARAMS$constant_effects
+        ate = SIM_PARAMS$ate
     ) %>%
     pmap(run_simulation) # Map the cartesian product of results into simulation
 

@@ -6,9 +6,9 @@
 # Simulation parameters
 SIM_PARAMS <- list(
     n_cols = c(15, 100),
-    n_rows = c(250, 500, 1000, 2500, 10000),
+    n_rows = c(500, 1000, 2500, 5000, 10000),
     n_iterations = 1000,
-    constant_effects = c(FALSE, TRUE),
+    ate = c(0, 0.05, 0.25),
     train_fraction = 0.6
 )
 
@@ -16,7 +16,7 @@ SIM_PARAMS <- list(
 PATHS <- list(
     seed_file = "data/seeds.csv",
     output_dir = "G:/My Drive/CAPP/2025_Q2_ECON 41300_Exp/Paper/",
-    results_dir = "3_output/"
+    results_dir = "output/"
 )
 
 # GRF parameters

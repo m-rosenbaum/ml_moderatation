@@ -10,8 +10,6 @@ gen_output_df <- function() {
     # Inputs: None
     #
     # Returns: a 0x5 tibble
-
-
     df <- tibble(
         seed = integer(),
         autoc_p = double(),
@@ -40,7 +38,6 @@ add_sim_to_df <- function(df,
     #
     # Returns: an n+1 x 5 tibble
 
-
     # Append the new row to the table
     df <- bind_rows(df, tibble(seed = seed,
                                 autoc_p = autoc_p,
@@ -52,7 +49,7 @@ add_sim_to_df <- function(df,
 }
 
 
-gen_data <- function(n_obs, n_cols, seed, constant=TRUE) {
+gen_data <- function(n_obs, n_cols, seed, ate=0) {
     # Create simulated data to test estimated CATE procedure that can
     # handle complex nonlinearities.
     #
@@ -60,7 +57,7 @@ gen_data <- function(n_obs, n_cols, seed, constant=TRUE) {
     #   n_obs (int): Number of data points to generate
     #   n_cols (int): Number of columns to generate
     #   seed (int): int to use as see dfor dataset creation
-    #   constant (bool): If the ATE should be constant or of size 1
+    #   ate (float): What percent of the ATE should be opposite sign.
     #
     # Returns: tibble of N x M+2 datapoints with treatment information
 
@@ -101,30 +98,47 @@ gen_data <- function(n_obs, n_cols, seed, constant=TRUE) {
         }
     }
 
-    # Constant treatment effect, centered at 1, independent of X
+    # Random assignment
     rand <- runif(n_obs,0)
-    if (constant) {
-        tau <- 1
-    } else {
-        tau <-  runif(n_obs)*xs$X1*0.1 +
-                runif(n_obs)*xs$X2*0.2 +
-                runif(n_obs)*xs$X3*0.3 +
-                runif(n_obs)*xs$X4*0.4 +
-                runif(n_obs)*xs$X5*0.5 +
-                1
-    }
 
     # Outcome variable a complicated function of Xs with some noise
-    if (n_cols >= 9) {
-        outcome <-
-            pull(xs, 1) +
-            pull(xs, 4) +
-            pull(xs, 7) * pull(xs, 2) +
-            pull(xs, 9) +
-            rnorm(n_obs, 0, 1)
+    predictors <- 
+        pull(xs, 2) +
+        pull(xs, 4) +
+        pull(xs, 6) +
+        pull(xs, 7) * pull(xs, 8)
+
+    # Demean and SD = 1 so same component effect as random normal draw
+    predictors <- (predictors - mean(predictors)) / sd(predictors)
+
+    # Create the outcome variable as a 50/50 mix of predictor & random draw
+    outcome <-
+        0.5 * predictors +
+        0.5 * rnorm(n_obs, 0, 1)
+
+    ## Taus
+    # Calculate minimum detectable effect based on n_obs
+    # TODO: Binary outcome -- would just be 2.8 * sqrt(1/n_obs)
+    mde <- (qt(0.8, df=(n_obs-2)) + qt((1-0.05)/2, df=(n_obs-2))) * 
+             sqrt(1 /(0.5*(1-0.5))) * sqrt(1 / n_obs) * sd(outcome)
+    if (ate == 0) {
+        # Constant effect at MDE
+        tau <- rep(mde, n_obs) 
     } else {
-        # TODO: Figure out what to do if small Ns
-        outcome <- rowSums(xs) + rnorm(n_obs, 0, 1)
+        # Create 50% of treatment effect from X1-X5 with some complex moderation pathways
+        moderators <- 
+                xs$X1*0.2 +
+                xs$X2*0.1 +
+                xs$X3*0.5 +
+                xs$X4*xs$X5*0.2
+        moderators <- (moderators - mean(moderators)) / sd(moderators)
+
+        # Calculate required variance to get ate% negative values
+        req_sd <- mde / qnorm(ate/100)
+        
+        # Generate tau with desired mean and variance
+        tau <- 0.5 * rnorm(n_obs, 0, 1) + 0.5 * moderators
+        tau <- (tau - mean(tau)) * req_sd/sd(tau) + mde
     }
 
     # Create data frame
@@ -164,7 +178,7 @@ sim_iter_cate <- function(Y, X, W, output, seed) {
     # Fit a CATE function on training data.
     cate.forest <- causal_forest(X[train, ], Y[train], W[train])
     eval.forest <- causal_forest(X.test, Y[test], W[test])
-    tau.hat.test <- predict(cate.forest, X.test)$predictions # Extract predictions
+    tau.hat.test <- predict(cate.forest, X.test)$predictions
 
     # *** Evaluate heterogeneity via TOC/AUTOC ***
     # Use eval.forest to form a doubly robust estimate of TOC/AUTOC.

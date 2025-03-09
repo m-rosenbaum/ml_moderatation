@@ -7,16 +7,16 @@
 #######################################
 # 1. Simulation function
 #######################################
-run_simulation <- function(n_cols, n_rows, constant) {
+run_simulation <- function(n_cols, n_rows, ate) {
     # Get seed and validate
-    seed <- get_seed(n_cols, n_rows, constant)
+    seed <- get_seed(n_cols, n_rows, ate)
     output <- gen_output_df()
     
     # Generate synthetic data
-    data <- gen_data(n_obs = n_rows, n_cols = n_cols, seed = seed, constant = constant)
+    data <- gen_data(n_obs = n_rows, n_cols = n_cols, seed = seed, ate = ate)
     
     # Calculate true correlations if heterogeneous effects
-    if (!constant) {
+    if (ate != 0) {
         true_corrs <- calc_corrs(data$tau, data %>% select(X1:X5))
     }
     
@@ -28,11 +28,11 @@ run_simulation <- function(n_cols, n_rows, constant) {
     # Run iterations
     for (i in (seed + 1):(seed + SIM_PARAMS$n_iterations)) {
         output <- sim_iter_cate(Y, X, W, output, i)
-        log_progress(i, seed, n_cols, n_rows, constant)
+        log_progress(i, seed, n_cols, n_rows, ate)
     }
     
     # Save output to file
-    save_results(output, n_cols, n_rows, constant)
+    save_results(output, n_cols, n_rows, ate)
     return(output)
 }
 
@@ -45,7 +45,7 @@ read_and_validate_seeds <- function() {
     seeds <- read.csv(PATHS$seed_file)
     
     # Check columns correct
-    required_cols <- c("n_cols", "n_rows", "constant", "seed")
+    required_cols <- c("n_cols", "n_rows", "ate", "seed")
     missing_cols <- setdiff(required_cols, names(seeds))
     if (length(missing_cols) > 0) {
         stop("Missing required columns in seeds file: ", 
@@ -55,13 +55,13 @@ read_and_validate_seeds <- function() {
     return(seeds)
 }
 
-get_seed <- function(n_cols, n_rows, constant) {
+get_seed <- function(n_cols, n_rows, ate) {
     seeds <- read_and_validate_seeds()
     
     seed <- seeds %>%
         filter(n_cols == !!n_cols, 
                n_rows == !!n_rows, 
-               constant == !!constant) %>%
+               ate == !!ate) %>%
         pull(seed)
     
     if(length(seed) != 1) {
@@ -71,7 +71,7 @@ get_seed <- function(n_cols, n_rows, constant) {
     return(seed)
 }
 
-log_progress <- function(current_iter, seed, n_cols, n_rows, constant) {
+log_progress <- function(current_iter, seed, n_cols, n_rows, ate) {
     # Reset to start at 0 
     iterations_completed <- current_iter - seed
     
@@ -93,7 +93,7 @@ log_progress <- function(current_iter, seed, n_cols, n_rows, constant) {
         cat(iterations_completed,
             " iterations done for N_COL = ", n_cols,
             " | N_ROW = ", n_rows, 
-            " | Const ATE = ", constant,
+            " | ATE = ", ate,
             " | Time for 50 iterations: ", 
             if(is.character(time_diff)) time_diff else sprintf("%.2f secs", as.numeric(time_diff)),
             "\n"
@@ -101,13 +101,14 @@ log_progress <- function(current_iter, seed, n_cols, n_rows, constant) {
     }
 }
 
-save_results <- function(output, n_cols, n_rows, constant) {
+save_results <- function(output, n_cols, n_rows, ate) {
     filename <- file.path(
         PATHS$output_dir,
+        PATHS$results_dir,
         paste0(
             "sim_n_col_", n_cols, 
             "_n_row_", n_rows, 
-            "_const_", constant, 
+            "_const_", ate, 
             ".csv"
         )
     )
