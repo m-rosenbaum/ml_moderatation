@@ -20,7 +20,7 @@ I generate data according to the following procedure:
     - Discrete values (0,1,2)
     - Non-linear combination: sin(normal) + log(|normal| + 1)
 - **Treatment effect ($\tau$)** are generated randomly as well:
-    - Depending on what I test, $\tau$ is fixed at 1 for all observations, or is estimated with 50% mediation from 5 Xs with either 5% or 25% of the taus below 0.
+    - Depending on what I test, $\tau$ is fixed at 1 for all observations, or is estimated with 50% moderation from 5 Xs with either 5% or 25% of the taus below 0.
 - **Outcome Generation (Y)**: 50% of the variation is explained by features. To do so, I combines a complex linear set of features (2 of which are included in estimating heterogeneous treatment effects) at 10% each and then 50% draws from a normal distribution, with a mean of 0 and SD 1. 
 - **Random assignment** is done as simple random assignment with 50% treatment probability and is sorted by random number with a separate seed to ensure reproducibility. 
 

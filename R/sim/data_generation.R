@@ -99,7 +99,7 @@ gen_data <- function(n_obs, n_cols, seed, ate=0) {
     }
 
     # Random assignment
-    rand <- runif(n_obs,0)
+    rand <- runif(n_obs, 0, 1)
 
     # Outcome variable a complicated function of Xs with some noise
     predictors <- 
@@ -119,8 +119,7 @@ gen_data <- function(n_obs, n_cols, seed, ate=0) {
     ## Taus
     # Calculate minimum detectable effect based on n_obs
     # TODO: Binary outcome -- would just be 2.8 * sqrt(1/n_obs)
-    mde <- (qt(0.8, df=(n_obs-2)) + qt((1-0.05)/2, df=(n_obs-2))) * 
-             sqrt(1 /(0.5*(1-0.5))) * sqrt(1 / n_obs) * sd(outcome)
+    mde <- calc_mde(outcome)
     if (ate == 0) {
         # Constant effect at MDE
         tau <- rep(mde, n_obs) 
@@ -134,81 +133,38 @@ gen_data <- function(n_obs, n_cols, seed, ate=0) {
         moderators <- (moderators - mean(moderators)) / sd(moderators)
 
         # Calculate required variance to get ate% negative values
-        req_sd <- mde / qnorm(ate/100)
+        # Calculate required variance to get ate% negative values
+        req_sd <- mde / qnorm(1-(ate))
         
         # Generate tau with desired mean and variance
-        tau <- 0.5 * rnorm(n_obs, 0, 1) + 0.5 * moderators
-        tau <- (tau - mean(tau)) * req_sd/sd(tau) + mde
+        tau <- 0.50 * rnorm(n_obs, 0, 1) + 0.50 * moderators
+        tau <- tau * (req_sd / sd(tau)) # Scale the demeaned dist by the quantile needed to get 5% negative, than shift to the MDE
+        tau <- (tau - mean(tau)) + mde  
     }
 
     # Create data frame
     df <- tibble(outcome, rand, xs, tau) %>%
         arrange(rand) %>%
-        mutate(treatment = if_else(row_number() > (n_obs / 2), 1, 0),
-                outcome = if_else(treatment == 1, outcome + tau, outcome)) %>%
+        mutate(treatment = if_else(row_number() > (n_obs / 2), 1, 0)) %>%
+        mutate(outcome = if_else(treatment == 1, outcome + tau, outcome)) %>%
         select(-c(rand)) %>%
         select(outcome, treatment, tau, starts_with("X")) # Reorder outcomes
 
     return(df)
 }
 
-
-sim_iter_cate <- function(Y, X, W, output, seed) {
-    # Run a single simulation to estimate CATEs using the Wager procedure.
+calc_mde <- function(outcome) {
+    # Calculate the Minimum Detectable Effect (MDE) of a vector of outcomes.
     #
-    # Input:
-    #   Y: Vector of outcomes
-    #   X: Vector of Xs
-    #   W: Vector of treatment assignments
-    #   output: a n-1 x 5 tibble to add a simulation result to.
-    #   seed: Seed used for this iteration of the simulation
-    #
-    # Returns: A N x 5 tibble documenting all current iterations of the
-    #          simulation.
+    # Inputs:
+    #    - outcome (vector): Vector of outcome values
+    #  
+    # Returns (float): minimum detectable effect in units of standard deviation
 
-    ## Create sim prior to sample splitting
-    set.seed(seed)
-
-    # Split data into a train and test sample.
-    train <- sample(nrow(X), 0.6 * nrow(X))
-    test <- -train
-    X.test <- X[test, ]
-
-    ## 1. Estimate CATE forest
-    # Fit a CATE function on training data.
-    cate.forest <- causal_forest(X[train, ], Y[train], W[train])
-    eval.forest <- causal_forest(X.test, Y[test], W[test])
-    tau.hat.test <- predict(cate.forest, X.test)$predictions
-
-    # *** Evaluate heterogeneity via TOC/AUTOC ***
-    # Use eval.forest to form a doubly robust estimate of TOC/AUTOC.
-    rate.cate <- rank_average_treatment_effect(
-        eval.forest,
-        tau.hat.test,
-        q = seq(0.05, 1, length.out = 100)
+    return(
+        (qt(0.8, df=length(outcome)-2) + qt(1-0.05/2, df=length(outcome)-2)) * 
+        sqrt(1 /(0.5*(1-0.5))) * 
+        sqrt(1 / length(outcome)) * 
+        sd(outcome)
     )
-
-    # Get a 2-sided p-value Pr(>|t|) for RATE = 0 using a t-value.
-    cate_e <- rate.cate$estimate
-    cate_se <- rate.cate$std.err
-    autoc_p <- 2 * pnorm(-abs(rate.cate$estimate / rate.cate$std.err))
-
-    # Put in the errors in the sampling
-    output <- add_sim_to_df(output,
-                            seed = seed,
-                            cate_e = cate_e,
-                            cate_se = cate_se,
-                            autoc_p = autoc_p)
-    return(output)
-}
-
-calc_corrs <- function(tau, columns) {
-    #  Compute correlations between the outcome and the variables.
-    #
-    #  Input:
-    #   - tau (vector): N x N vector of treatment effect
-    #   - columns (list): List of N x N vectors to collect treatment effects for
-    #
-    #  Returns: Tibble of correlations
-    return(sapply(columns, function(col) cor(tau, col)))
 }

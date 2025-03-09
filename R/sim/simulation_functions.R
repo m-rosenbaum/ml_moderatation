@@ -36,6 +36,54 @@ run_simulation <- function(n_cols, n_rows, ate) {
     return(output)
 }
 
+sim_iter_cate <- function(Y, X, W, output, seed) {
+    # Run a single simulation to estimate CATEs using the Wager procedure.
+    #
+    # Input:
+    #   Y: Vector of outcomes
+    #   X: Vector of Xs
+    #   W: Vector of treatment assignments
+    #   output: a n-1 x 5 tibble to add a simulation result to.
+    #   seed: Seed used for this iteration of the simulation
+    #
+    # Returns: A N x 5 tibble documenting all current iterations of the
+    #          simulation.
+
+    ## Create sim prior to sample splitting
+    set.seed(seed)
+
+    # Split data into a train and test sample.
+    train <- sample(nrow(X), 0.6 * nrow(X))
+    test <- -train
+    X.test <- X[test, ]
+
+    ## 1. Estimate CATE forest
+    # Fit a CATE function on training data.
+    cate.forest <- causal_forest(X[train, ], Y[train], W[train])
+    eval.forest <- causal_forest(X.test, Y[test], W[test])
+    tau.hat.test <- predict(cate.forest, X.test)$predictions
+
+    # *** Evaluate heterogeneity via TOC/AUTOC ***
+    # Use eval.forest to form a doubly robust estimate of TOC/AUTOC.
+    rate.cate <- rank_average_treatment_effect(
+        eval.forest,
+        tau.hat.test,
+        q = seq(0.05, 1, length.out = 100)
+    )
+
+    # Get a 2-sided p-value Pr(>|t|) for RATE = 0 using a t-value.
+    cate_e <- rate.cate$estimate
+    cate_se <- rate.cate$std.err
+    autoc_p <- 2 * pnorm(-abs(rate.cate$estimate / rate.cate$std.err))
+
+    # Put in the errors in the sampling
+    output <- add_sim_to_df(output,
+                            seed = seed,
+                            cate_e = cate_e,
+                            cate_se = cate_se,
+                            autoc_p = autoc_p)
+    return(output)
+}
 
 #######################################
 # 2. Helper functions for reproducibility and logging
@@ -122,4 +170,15 @@ validate_environment <- function() {
     if (!dir.exists(PATHS$output_dir)) {
         stop("Output directory not found")
     }
+}
+
+calc_corrs <- function(tau, columns) {
+    #  Compute correlations between the outcome and the variables.
+    #
+    #  Input:
+    #   - tau (vector): N x N vector of treatment effect
+    #   - columns (list): List of N x N vectors to collect treatment effects for
+    #
+    #  Returns: Tibble of correlations
+    return(sapply(columns, function(col) cor(tau, col)))
 }
