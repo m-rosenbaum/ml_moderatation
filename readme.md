@@ -69,8 +69,11 @@ I use the following settings:
 - Minimum leaf size (`min_node_size`) = 5
 - honesty = TRUE
 - alpha = 0.05
+- Assignment probability (`W.hat`) = 0.5
 
 ## Package Reference
 Tibshirani, J., Athey, S., Sverdrup, E., and Wager, S. (2023). grf: Generalized Random Forests. R package version 2.4.0. https://grf-labs.github.io/grf/
+
 Wickham H (2011). "testthat: Get Started with Testing." The R Journal, 3, 5-10. https://journal.r-project.org/archive/2011-1/RJournal_2011-1_Wickham.pdf.
+
 Wickham, H., Averick, M., Bryan, J., Chang, W., McGowan, L., François, R., Grolemund, G., Hayes, A., Henry, L., Hester, J., Kuhn, M., Pedersen, T., Miller, E., Bache, S., Müller, K., Ooms, J., Robinson, D., Seidel, D., Spinu, V., Takahashi, K., Vaughn, D., Wilke, C., Woo, K., Yutani, H. (2019). Welcome to the tidyverse. Journal of Open Source Software, 4(43), 1686. http://dx.doi.org/10.21105/joss.01686

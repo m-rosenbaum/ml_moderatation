@@ -59,8 +59,20 @@ sim_iter_cate <- function(Y, X, W, output, seed) {
 
     ## 1. Estimate CATE forest
     # Fit a CATE function on training data.
-    cate.forest <- causal_forest(X[train, ], Y[train], W[train])
-    eval.forest <- causal_forest(X.test, Y[test], W[test])
+    cate.forest <- causal_forest(X[train, ], Y[train], W[train], 
+        W.hat = GRF_PARAMS$w_hat, 
+        num.trees = GRF_PARAMS$num_trees,
+        min.node.size = GRF_PARAMS$min_node_size,
+        alpha = GRF_PARAMS$alpha,
+        honesty = GRF_PARAMS$honesty
+        )
+    eval.forest <- causal_forest(X.test, Y[test], W[test], 
+        W.hat = GRF_PARAMS$w_hat, 
+        num.trees = GRF_PARAMS$num_trees,
+        min.node.size = GRF_PARAMS$min_node_size,
+        alpha = GRF_PARAMS$alpha,
+        honesty = GRF_PARAMS$honesty
+        )
     tau.hat.test <- predict(cate.forest, X.test)$predictions
 
     # *** Evaluate heterogeneity via TOC/AUTOC ***
