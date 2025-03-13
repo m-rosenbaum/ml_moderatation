@@ -81,7 +81,7 @@ gen_data <- function(n_obs, n_cols, seed, ate=0) {
         } else if (draw < 4/6) {
             col_data <- rbeta(n_obs, shape1 = 2, shape2 = 5) * 2 - 1
         } else if (draw < 5/6) {
-            col_data <- sample(0:2, n_obs, replace = TRUE)
+            col_data <- sample(0:1, n_obs, replace = TRUE)
         } else {
             col_data <- sin(rnorm(n_obs, 0, 1)) + log(abs(rnorm(n_obs, 0, 1)) + 1)
         }

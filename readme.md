@@ -17,7 +17,7 @@ I generate data according to the following procedure:
     - Poisson (lambda=1)
     - Uniform (-1 to 1)
     - Transformed Beta (scaled to -1 to 1)
-    - Discrete values (0,1,2)
+    - Discrete values (0,1)
     - Non-linear combination: sin(normal) + log(|normal| + 1)
 - **Treatment effect ($\tau$)** are generated randomly as well:
     - Depending on what I test, $\tau$ is fixed at 1 for all observations, or is estimated with 50% moderation from 5 Xs with either 5% or 25% of the taus below 0.

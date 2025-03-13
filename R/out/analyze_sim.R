@@ -32,12 +32,12 @@ library(stringr)
 
 ## 3. Helper functions
 extract_metadata <- function(filename) {
-    match <- stringr::str_match(basename(filename), "sim_n_col_(\\d+)_n_row_(\\d+)_const_(\\d+)")
+    match <- stringr::str_match(basename(filename), "sim_n_col_(\\d+)_n_row_(\\d+)_const_([0-9]+(?:\\.[0-9]+)?)")
     if (is.na(match[1])) return(NULL)
     return(tibble(
         n_col = as.integer(match[2]),
         n_row = as.integer(match[3]),
-        const = as.float(match[4])
+        ate = as.numeric(match[4])
     ))
 }
 

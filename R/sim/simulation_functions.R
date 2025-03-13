@@ -12,21 +12,23 @@ run_simulation <- function(n_cols, n_rows, ate) {
     seed <- get_seed(n_cols, n_rows, ate)
     output <- gen_output_df()
     
-    # Generate synthetic data
-    data <- gen_data(n_obs = n_rows, n_cols = n_cols, seed = seed, ate = ate)
-    
-    # Calculate true correlations if heterogeneous effects
-    if (ate != 0) {
-        true_corrs <- calc_corrs(data$tau, data %>% select(X1:X5))
-    }
-    
-    # Prepare data for simulation
-    Y <- data$outcome
-    W <- data$treatment
-    X <- data[, -c(1, 2, 3)]  # Omit outcome, treatment, and tau
-    
     # Run iterations
     for (i in (seed + 1):(seed + SIM_PARAMS$n_iterations)) {
+   
+        # Generate synthetic data
+        data <- gen_data(n_obs = n_rows, n_cols = n_cols, seed = i, ate = ate)
+        
+        # Calculate true correlations if heterogeneous effects
+        if (ate != 0) {
+            true_corrs <- calc_corrs(data$tau, data %>% select(X1:X5))
+        }
+        
+        # Prepare data for simulation
+        Y <- data$outcome
+        W <- data$treatment
+        X <- data[, -c(1, 2, 3)]  # Omit outcome, treatment, and tau
+        
+        # Run an iteration and save results
         output <- sim_iter_cate(Y, X, W, output, i)
         log_progress(i, seed, n_cols, n_rows, ate)
     }

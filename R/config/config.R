@@ -6,10 +6,10 @@
 # Simulation parameters
 SIM_PARAMS <- list(
     n_cols = c(15, 100),
-    n_rows = c(500, 1000, 2500), # TODO: 5000, 10000
-    n_iterations = 1000,
+    n_rows = c(500, 1000, 2500, 5000, 10000), 
+    n_iterations = 100,
     ate = c(0, 0.05, 0.25),
-    train_fraction = 0.6
+    train_fraction = 0.5
 )
 
 # File paths
